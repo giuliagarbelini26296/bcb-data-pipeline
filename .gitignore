@@ -15,3 +15,4 @@ logs/
 exports/
 *.egg-info/
 dbt_project/.user.yml
+logs/
