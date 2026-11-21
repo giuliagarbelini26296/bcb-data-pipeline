@@ -14,3 +14,4 @@ logs/
 # saídas geradas
 exports/
 *.egg-info/
+dbt_project/.user.yml

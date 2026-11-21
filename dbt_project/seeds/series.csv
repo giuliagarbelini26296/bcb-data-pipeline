@@ -1,0 +1,5 @@
+series_code,series_name,unit,frequency,description
+432,selic_meta,% a.a.,diaria,Meta da taxa Selic definida pelo Copom
+433,ipca_mensal,% no mês,mensal,IPCA - variação mensal
+13522,ipca_12m,% em 12 meses,mensal,IPCA - acumulado em 12 meses
+1,dolar_ptax_venda,R$/US$,diaria,Dólar americano (PTAX) - venda

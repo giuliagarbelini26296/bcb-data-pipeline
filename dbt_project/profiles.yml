@@ -1,0 +1,13 @@
+# Conexão via variáveis de ambiente; os valores padrão são do Postgres local (docker compose).
+bcb:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('PGHOST', '127.0.0.1') }}"
+      port: "{{ env_var('PGPORT', '55434') | int }}"
+      user: "{{ env_var('PGUSER', 'bcb') }}"
+      password: "{{ env_var('PGPASSWORD', 'bcb-local-only') }}"
+      dbname: "{{ env_var('PGDATABASE', 'bcb') }}"
+      schema: analytics
+      threads: 4

@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Camada bronze, gravada pela ingestão em Python (src/bcb_pipeline/ingest.py).
+    schema: raw
+    tables:
+      - name: sgs_observations
+        description: Valores das séries do SGS, como vieram da API.
+      - name: copom_statements
+        description: Comunicados do Copom em HTML, como vieram do site do BC.
+      - name: ingestion_runs
+        description: Uma linha por fonte em cada execução da ingestão.
+        # Freshness: avisa se a ingestão não roda com sucesso há mais de 2 dias.
+        loaded_at_field: finished_at
+        freshness:
+          warn_after: {count: 2, period: day}
+          error_after: {count: 7, period: day}

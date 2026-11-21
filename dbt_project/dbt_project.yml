@@ -1,0 +1,29 @@
+name: bcb
+version: "1.0.0"
+profile: bcb
+config-version: 2
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+models:
+  bcb:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+
+seeds:
+  bcb:
+    +schema: staging
+
+tests:
+  +store_failures: true      # linhas que reprovam ficam numa tabela, para investigar
+  +schema: dq

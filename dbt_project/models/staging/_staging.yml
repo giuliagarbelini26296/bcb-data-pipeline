@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: stg_sgs__observations
+    description: Séries do SGS com metadados. Datas futuras (Selic vigente até a próxima reunião) ficam marcadas em is_projected.
+    data_tests:
+      - unique_combination:
+          columns: [series_code, ref_date]
+    columns:
+      - name: series_code
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('series'), field: series_code}
+      - name: ref_date
+        data_tests: [not_null]
+      - name: value
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments: {min_value: 0, max_value: 50}
+              config: {where: "series_name = 'selic_meta'"}
+          - accepted_range:
+              arguments: {min_value: -5, max_value: 5}
+              config: {where: "series_name = 'ipca_mensal'"}
+          - accepted_range:
+              arguments: {min_value: 0.5, max_value: 20}
+              config: {where: "series_name = 'dolar_ptax_venda'"}
+      - name: is_projected
+        data_tests:
+          # só a Selic meta pode ter data futura
+          - accepted_values:
+              arguments: {values: [false]}
+              config: {where: "series_name <> 'selic_meta'"}
+
+  - name: stg_copom__statements
+    description: Comunicados do Copom em texto limpo.
+    columns:
+      - name: meeting
+        data_tests: [unique, not_null]
+      - name: meeting_date
+        data_tests: [not_null]
+      - name: body
+        data_tests: [not_null, no_html_tags]
+      - name: body_chars
+        data_tests:
+          - accepted_range:
+              # comunicado sem conteúdo (ou HTML que a limpeza destruiu) deve chamar atenção
+              arguments: {min_value: 80}
+              config: {severity: warn}

@@ -1,0 +1,74 @@
+version: 2
+
+models:
+  - name: fct_indicadores_mensais
+    description: Um mês por linha, com Selic, IPCA, dólar e juro real. Incremental.
+    config:
+      contract: {enforced: true}   # contrato: nomes e tipos garantidos para quem consome
+    columns:
+      - name: mes
+        data_type: date
+        data_tests: [unique, not_null]
+      - name: selic_meta_fim_mes
+        data_type: numeric(8,4)
+      - name: ipca_mes
+        data_type: numeric(8,4)
+      - name: ipca_12m
+        data_type: numeric(8,4)
+      - name: ipca_12m_calculado
+        data_type: numeric(8,4)
+      - name: dolar_medio
+        data_type: numeric(10,4)
+      - name: dolar_fim_mes
+        data_type: numeric(10,4)
+      - name: juro_real_12m
+        data_type: numeric(8,4)
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: -15, max_value: 20}
+      - name: atualizado_em
+        data_type: timestamptz
+
+  - name: fct_copom_decisoes
+    description: Uma reunião do Copom por linha; decisão derivada da série oficial da Selic.
+    columns:
+      - name: reuniao
+        data_tests: [unique, not_null]
+      - name: decisao
+        data_tests:
+          - accepted_values:
+              arguments: {values: [elevou, reduziu, manteve]}
+      - name: variacao_pp
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: -3, max_value: 3}
+
+unit_tests:
+  # Teste de unidade do dbt: entrada fictícia, saída esperada, sem tocar nos dados reais.
+  - name: decisao_do_copom_vem_da_serie
+    model: fct_copom_decisoes
+    given:
+      - input: ref('stg_copom__statements')
+        rows:
+          - {meeting: 1, meeting_date: 2026-01-10, title: "Nota", announced_rate: null}
+          - {meeting: 2, meeting_date: 2026-02-10, title: "Copom reduz", announced_rate: 14.5}
+          - {meeting: 3, meeting_date: 2026-03-10, title: "Copom mantém", announced_rate: 14.5}
+          - {meeting: 4, meeting_date: 2026-04-01, title: "feriado no dia seguinte", announced_rate: 14.0}
+      - input: ref('int_selic_diaria')
+        rows:
+          - {ref_date: 2026-01-10, selic_meta: 14.0}
+          - {ref_date: 2026-01-11, selic_meta: 15.0}
+          - {ref_date: 2026-02-10, selic_meta: 15.0}
+          - {ref_date: 2026-02-11, selic_meta: 14.5}
+          - {ref_date: 2026-03-10, selic_meta: 14.5}
+          - {ref_date: 2026-03-11, selic_meta: 14.5}
+          - {ref_date: 2026-04-01, selic_meta: 14.5}
+          - {ref_date: 2026-04-02, selic_meta: 14.5}
+          - {ref_date: 2026-04-03, selic_meta: 14.5}
+          - {ref_date: 2026-04-06, selic_meta: 14.0}
+    expect:
+      rows:
+        - {reuniao: 1, decisao: elevou, variacao_pp: 1.00}
+        - {reuniao: 2, decisao: reduziu, variacao_pp: -0.50}
+        - {reuniao: 3, decisao: manteve, variacao_pp: 0.00}
+        - {reuniao: 4, decisao: reduziu, variacao_pp: -0.50}

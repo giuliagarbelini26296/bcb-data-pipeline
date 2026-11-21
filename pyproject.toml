@@ -31,3 +31,5 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Não depende do .pth da instalação editável (no macOS ele às vezes fica "oculto" e é ignorado).
+pythonpath = ["src"]
