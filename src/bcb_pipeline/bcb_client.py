@@ -47,6 +47,14 @@ class CopomStatement:
     html: str
 
 
+def _is_json(resp: httpx.Response) -> bool:
+    try:
+        resp.json()
+    except ValueError:  # json.JSONDecodeError é subclasse de ValueError
+        return False
+    return True
+
+
 def _windows(start: date, end: date, size: int = MAX_WINDOW_DAYS) -> list[tuple[date, date]]:
     out, cur = [], start
     while cur <= end:
@@ -78,9 +86,20 @@ class BcbClient:
                     raise
                 logger.warning("erro de rede (%s), tentativa %d", exc, attempt + 1)
             else:
-                if resp.status_code not in RETRY_STATUS or attempt == self.max_retries:
+                if resp.status_code == 200 and not _is_json(resp):
+                    # Achado no CI: o SGS às vezes responde 200 com corpo vazio ou uma página
+                    # HTML de erro. É falha temporária, como um 502: tenta de novo.
+                    if attempt == self.max_retries:
+                        raise ValueError(
+                            f"resposta 200 sem JSON válido de {url}: {resp.text[:120]!r}"
+                        )
+                    logger.warning("200 sem JSON em %s, tentativa %d", url, attempt + 1)
+                elif resp.status_code not in RETRY_STATUS or attempt == self.max_retries:
                     return resp
-                logger.warning("HTTP %d em %s, tentativa %d", resp.status_code, url, attempt + 1)
+                else:
+                    logger.warning(
+                        "HTTP %d em %s, tentativa %d", resp.status_code, url, attempt + 1
+                    )
             self.sleep(min(2**attempt, 30))
         raise RuntimeError("inalcançável")
 

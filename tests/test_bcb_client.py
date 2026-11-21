@@ -78,3 +78,23 @@ def test_copom_statement():
 
     st = make_client(handler).fetch_copom_statement(282)
     assert st.meeting == 282 and st.ref_date == date(2026, 11, 4) and st.html == "<p>texto</p>"
+
+
+def test_200_without_json_is_retried():
+    """Visto no CI: o SGS respondeu 200 com corpo vazio; na tentativa seguinte, veio certo."""
+    calls = []
+
+    def handler(req):
+        calls.append(1)
+        if len(calls) == 1:
+            return httpx.Response(200, text="")
+        return httpx.Response(200, json=[{"data": "02/01/2026", "valor": "15.0"}])
+
+    obs = make_client(handler).fetch_series(432, date(2026, 1, 1), date(2026, 1, 5))
+    assert len(calls) == 2 and obs[0].value == Decimal("15.0")
+
+
+def test_200_without_json_gives_clear_error_after_retries():
+    client = make_client(lambda req: httpx.Response(200, text="<html>erro</html>"), max_retries=1)
+    with pytest.raises(ValueError, match="200 sem JSON"):
+        client.fetch_series(432, date(2026, 1, 1), date(2026, 1, 5))

@@ -45,7 +45,8 @@ Cada fonte é uma transação. Se a API do dólar cair, as outras séries são g
 1. **Duplicatas vindas da própria fonte.** O IPCA retornou 324 linhas, mas só 322 datas diferentes. O SGS limita consultas a 10 anos, então a carga é dividida em janelas. Nas séries mensais, uma janela que começa em 29/12/2009 devolve também 01/12/2009, que já tinha vindo na janela anterior. O upsert já impedia a duplicata no banco; o cliente passou a deduplicar também, e há um teste para isso.
 2. **Datas no futuro.** A Selic meta tem 18 linhas com data **depois de hoje**: o BC já publica a taxa vigente até a próxima reunião do Copom. A camada raw guarda como veio; a etapa 2 decide o que fazer com isso.
 3. **Bug pego pelos testes:** `series=[]` (nenhuma série) era tratado como "todas", porque em Python `[] or todas` devolve `todas`. Corrigido com `is None`.
-4. **Ambiente:** no macOS, arquivos `.pth` com o atributo "oculto" são ignorados pelo Python 3.12, e o pacote instalado em modo editável "sumiu". Resolvido com `chflags nohidden`.
+4. **Resposta "OK" que não é OK (achado no CI).** Rodando no GitHub Actions, o SGS respondeu **200** para a Selic, mas com corpo vazio, e o parser quebrou com `JSONDecodeError`. Na mesma execução, o dólar recebeu um **502**, que o retry já resolvia. A falha ficou isolada (as outras fontes foram gravadas e o erro, registrado), e agora "200 sem JSON válido" também conta como falha temporária e é repetido. Lição: não confie só no código HTTP; valide o conteúdo.
+5. **Ambiente:** no macOS, arquivos `.pth` com o atributo "oculto" são ignorados pelo Python 3.12, e o pacote instalado em modo editável "sumiu". Resolvido com `chflags nohidden`.
 
 ## Como rodar
 
