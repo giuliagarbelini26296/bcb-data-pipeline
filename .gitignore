@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+# dbt
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+logs/
+# dagster
+.dagster_home/
+# saídas geradas
+exports/
+*.egg-info/
