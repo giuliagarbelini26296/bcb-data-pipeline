@@ -46,6 +46,14 @@ def test_dbt_tests_become_asset_checks():
     checks = {k.name for k in defs.resolve_asset_graph().asset_check_keys}
     assert "assert_copom_taxa_bate_com_selic" in checks
     assert "series_em_dia" in checks
+    assert "indice_completo" in checks
+
+
+def test_rag_assets_come_after_the_dbt_documents():
+    graph = defs.resolve_asset_graph()
+    files, index = AssetKey(["rag", "arquivos_markdown"]), AssetKey(["rag", "indice_pgvector"])
+    assert AssetKey(["marts", "rag_documentos"]) in graph.get(files).parent_keys
+    assert files in graph.get(index).parent_keys
 
 
 def test_ingestion_asset_materializes_with_fake_client(conn):

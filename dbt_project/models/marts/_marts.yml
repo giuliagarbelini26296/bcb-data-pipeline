@@ -43,6 +43,22 @@ models:
           - accepted_range:
               arguments: {min_value: -3, max_value: 3}
 
+  - name: rag_documentos
+    description: Um documento Markdown por reunião do Copom e por ano de indicadores; entrada do RAG.
+    columns:
+      - name: doc_id
+        data_tests: [unique, not_null]
+      - name: tipo
+        data_tests:
+          - accepted_values:
+              arguments: {values: [copom, indicadores]}
+      - name: conteudo
+        data_tests: [not_null, no_html_tags]
+      - name: caracteres
+        data_tests:
+          - accepted_range:
+              arguments: {min_value: 150, max_value: 20000}
+
 unit_tests:
   # Teste de unidade do dbt: entrada fictícia, saída esperada, sem tocar nos dados reais.
   - name: decisao_do_copom_vem_da_serie

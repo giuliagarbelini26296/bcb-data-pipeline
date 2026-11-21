@@ -39,6 +39,7 @@ from dagster import (
     RetryPolicy,
     RunFailureSensorContext,
     ScheduleDefinition,
+    asset,
     asset_check,
     define_asset_job,
     multi_asset,
@@ -49,6 +50,7 @@ from dagster_dbt import DagsterDbtTranslator, DbtCliResource, DbtProject, dbt_as
 from .bcb_client import BcbClient
 from .config import SERIES, database_url
 from .ingest import run_ingestion
+from .rag import export_documents, index_documents
 
 ROOT = Path(__file__).resolve().parents[2]
 DBT_DIR = ROOT / "dbt_project"
@@ -162,6 +164,71 @@ def bcb_dbt(context: AssetExecutionContext, dbt: DbtCliResource):
     yield from dbt.cli(["build"], context=context).stream()
 
 
+# --------------------------------------------------------------------------------- RAG
+RAG_DOCS = AssetKey(["marts", "rag_documentos"])
+RAG_FILES = AssetKey(["rag", "arquivos_markdown"])
+RAG_INDEX = AssetKey(["rag", "indice_pgvector"])
+
+
+@asset(key=RAG_FILES, deps=[RAG_DOCS], group_name="rag", kinds={"markdown"})
+def rag_arquivos(db: PostgresResource) -> MaterializeResult:
+    """Um arquivo .md por documento; só reescreve o que mudou."""
+    with db.connect() as conn:
+        stats = export_documents(conn)
+    return MaterializeResult(
+        metadata={
+            "documentos": stats.total,
+            "escritos": stats.written,
+            "sem_mudanca": stats.unchanged,
+            "removidos": stats.removed,
+        }
+    )
+
+
+@asset(
+    key=RAG_INDEX,
+    deps=[RAG_FILES],
+    group_name="rag",
+    kinds={"pgvector"},
+    # O plano gratuito do Gemini limita embeddings POR MINUTO (429). Cada documento é gravado
+    # sozinho, então uma nova tentativa continua de onde parou. Backoff exponencial (60, 180 s)
+    # fazia esperar demais e desistir cedo; para cota por minuto, o certo é esperar pouco mais
+    # de 1 minuto, com espera FIXA, e tentar mais vezes. Achado na primeira indexação real.
+    retry_policy=RetryPolicy(max_retries=8, delay=65),
+)
+def rag_indice(db: PostgresResource) -> MaterializeResult:
+    """Embeddings no pgvector, pelo próprio assistente. Só documentos novos ou alterados."""
+    stats = index_documents(database_url=db.database_url)
+    return MaterializeResult(
+        metadata={
+            "arquivos": stats["files"],
+            "reindexados": stats["indexed"],
+            "sem_mudanca": stats["unchanged"],
+            "chunks_novos": stats["chunks"],
+            "chunks_no_banco": stats["total_chunks"],
+        }
+    )
+
+
+@asset_check(asset=RAG_INDEX, description="Índice e tabela rag_documentos têm os mesmos documentos")
+def indice_completo(db: PostgresResource) -> AssetCheckResult:
+    """Pega documento que ficou de fora do índice e documento "órfão" (apagado da tabela, mas
+    ainda no índice: o assistente não remove fontes que sumiram da pasta)."""
+    with db.connect() as conn:
+        esperado = {r[0] + ".md" for r in conn.execute("SELECT doc_id FROM marts.rag_documentos")}
+        indexado = {r[0] for r in conn.execute("SELECT source FROM public.rag_documents")}
+    faltando, orfaos = esperado - indexado, indexado - esperado
+    return AssetCheckResult(
+        passed=not faltando and not orfaos,
+        metadata={
+            "documentos": len(esperado),
+            "faltando_no_indice": len(faltando),
+            "orfaos_no_indice": len(orfaos),
+            "exemplos": ", ".join(sorted(faltando | orfaos)[:5]) or "nenhum",
+        },
+    )
+
+
 # ------------------------------------------------------------------- agenda e alertas
 pipeline_diario = define_asset_job(
     "pipeline_diario",
@@ -200,8 +267,8 @@ def alerta_de_falha(context: RunFailureSensorContext) -> None:
 
 def build_defs(bcb_client: BcbClient | None = None, db_url: str | None = None) -> Definitions:
     return Definitions(
-        assets=[raw_bcb, bcb_dbt],
-        asset_checks=[series_em_dia],
+        assets=[raw_bcb, bcb_dbt, rag_arquivos, rag_indice],
+        asset_checks=[series_em_dia, indice_completo],
         jobs=[pipeline_diario],
         schedules=[agenda_diaria],
         sensors=[alerta_de_falha],

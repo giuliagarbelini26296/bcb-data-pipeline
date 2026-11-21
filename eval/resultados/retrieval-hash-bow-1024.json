@@ -1,0 +1,225 @@
+{
+  "kind": "retrieval",
+  "config": {
+    "embedder": "hash-bow-1024",
+    "store": "pgvector",
+    "k": 4
+  },
+  "summary": {
+    "n": 10,
+    "hit_at_1": 0.8,
+    "hit_at_4": 0.9,
+    "recall_at_4": 0.9,
+    "top_score": 0.3709,
+    "mrr": 0.85,
+    "mean_top_score_unanswerable": 0.3221
+  },
+  "by_category": {
+    "direta": {
+      "n": 4,
+      "hit_at_1": 0.75,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 0.875,
+      "top_score": 0.4092
+    },
+    "multi-fonte": {
+      "n": 1,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0,
+      "top_score": 0.3268
+    },
+    "parafrase": {
+      "n": 5,
+      "hit_at_1": 0.8,
+      "hit_at_4": 0.8,
+      "recall_at_4": 0.8,
+      "reciprocal_rank": 0.8,
+      "top_score": 0.3491
+    }
+  },
+  "items": [
+    {
+      "id": "copom-282",
+      "category": "direta",
+      "question": "O que o Copom decidiu na reunião de 4 de novembro de 2026?",
+      "expected": [
+        "copom/2026-11-04-reuniao-282.md"
+      ],
+      "retrieved": [
+        "copom/2026-11-04-reuniao-282.md"
+      ],
+      "top_score": 0.4686,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "copom-271",
+      "category": "direta",
+      "question": "Para quanto o Copom elevou a Selic em junho de 2025?",
+      "expected": [
+        "copom/2025-06-18-reuniao-271.md"
+      ],
+      "retrieved": [
+        "copom/2025-06-18-reuniao-271.md",
+        "copom/2008-06-04-reuniao-135.md",
+        "copom/2010-06-09-reuniao-151.md",
+        "copom/2025-05-07-reuniao-270.md"
+      ],
+      "top_score": 0.4135,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "copom-277",
+      "category": "parafrase",
+      "question": "Em que reunião de 2026 o Banco Central começou a baixar os juros, e para quanto?",
+      "expected": [
+        "copom/2026-03-18-reuniao-277.md"
+      ],
+      "retrieved": [
+        "copom/2010-09-01-reuniao-153.md",
+        "indicadores/2015-indicadores-mensais.md",
+        "indicadores/2026-indicadores-mensais.md",
+        "copom/2026-09-16-reuniao-281.md"
+      ],
+      "top_score": 0.2249,
+      "hit_at_1": 0.0,
+      "hit_at_4": 0.0,
+      "recall_at_4": 0.0,
+      "reciprocal_rank": 0.0
+    },
+    {
+      "id": "copom-282-focus",
+      "category": "parafrase",
+      "question": "Quais expectativas de inflação da pesquisa Focus para 2026 e 2027 o Copom citou em novembro de 2026?",
+      "expected": [
+        "copom/2026-11-04-reuniao-282.md"
+      ],
+      "retrieved": [
+        "copom/2026-11-04-reuniao-282.md",
+        "copom/2026-01-28-reuniao-276.md",
+        "copom/2026-04-29-reuniao-278.md"
+      ],
+      "top_score": 0.4696,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "copom-282-projecao",
+      "category": "parafrase",
+      "question": "Qual a projeção de inflação do Copom para o horizonte relevante, segundo o comunicado de novembro de 2026?",
+      "expected": [
+        "copom/2026-11-04-reuniao-282.md"
+      ],
+      "retrieved": [
+        "copom/2026-11-04-reuniao-282.md",
+        "copom/2024-11-06-reuniao-266.md",
+        "copom/2025-11-05-reuniao-274.md"
+      ],
+      "top_score": 0.4934,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "copom-282-externo",
+      "category": "parafrase",
+      "question": "Que fatores externos o Copom apontou como adversos em novembro de 2026?",
+      "expected": [
+        "copom/2026-11-04-reuniao-282.md"
+      ],
+      "retrieved": [
+        "copom/2026-11-04-reuniao-282.md",
+        "copom/2024-07-31-reuniao-264.md"
+      ],
+      "top_score": 0.2397,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "ind-2020-12",
+      "category": "direta",
+      "question": "Qual era a Selic no fim de dezembro de 2020?",
+      "expected": [
+        "indicadores/2020-indicadores-mensais.md"
+      ],
+      "retrieved": [
+        "indicadores/2020-indicadores-mensais.md",
+        "copom/2020-12-09-reuniao-235.md"
+      ],
+      "top_score": 0.289,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "ind-2026-08",
+      "category": "direta",
+      "question": "Qual foi o IPCA de agosto de 2026?",
+      "expected": [
+        "indicadores/2026-indicadores-mensais.md"
+      ],
+      "retrieved": [
+        "copom/2026-08-05-reuniao-280.md",
+        "indicadores/2026-indicadores-mensais.md"
+      ],
+      "top_score": 0.4656,
+      "hit_at_1": 0.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 0.5
+    },
+    {
+      "id": "ind-2022-04",
+      "category": "parafrase",
+      "question": "Quanto a inflação acumulou nos 12 meses até abril de 2022?",
+      "expected": [
+        "indicadores/2022-indicadores-mensais.md"
+      ],
+      "retrieved": [
+        "indicadores/2022-indicadores-mensais.md",
+        "copom/2020-12-09-reuniao-235.md",
+        "copom/2022-12-07-reuniao-251.md"
+      ],
+      "top_score": 0.318,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "multi-selic-2020-2025",
+      "category": "multi-fonte",
+      "question": "Compare a Selic no fim de 2020 com a do fim de 2025.",
+      "expected": [
+        "indicadores/2020-indicadores-mensais.md",
+        "indicadores/2025-indicadores-mensais.md"
+      ],
+      "retrieved": [
+        "indicadores/2025-indicadores-mensais.md",
+        "indicadores/2020-indicadores-mensais.md",
+        "copom/2024-06-19-reuniao-263.md",
+        "indicadores/2022-indicadores-mensais.md"
+      ],
+      "top_score": 0.3268,
+      "hit_at_1": 1.0,
+      "hit_at_4": 1.0,
+      "recall_at_4": 1.0,
+      "reciprocal_rank": 1.0
+    }
+  ],
+  "created_at": "2026-11-21T14:42:09+00:00"
+}
