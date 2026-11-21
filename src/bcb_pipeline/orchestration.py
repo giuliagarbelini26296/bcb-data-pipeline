@@ -17,6 +17,7 @@ Conceitos (detalhes em docs/estudo/03-orquestracao-dagster.md):
 import json
 import os
 import shutil
+import subprocess
 import sys
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -148,7 +149,13 @@ dbt_project = DbtProject(project_dir=DBT_DIR, profiles_dir=DBT_DIR)
 # Em `dagster dev` o manifesto do dbt é gerado na hora; fora dele precisa existir antes.
 dbt_project.prepare_if_dev()
 if not dbt_project.manifest_path.exists():
-    DbtCliResource(project_dir=dbt_project, dbt_executable=DBT_EXE).cli(["parse"]).wait()
+    # `dbt parse` direto, e não via DbtCliResource.cli(): este grava em target/<id-aleatório>/,
+    # e o manifesto não aparece onde o Dagster procura. Só acontecia em máquina limpa (o CI).
+    subprocess.run(
+        [DBT_EXE, "parse", "--project-dir", str(DBT_DIR), "--profiles-dir", str(DBT_DIR)],
+        check=True,
+        capture_output=True,
+    )
 
 
 class Translator(DagsterDbtTranslator):
