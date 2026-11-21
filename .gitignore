@@ -16,3 +16,4 @@ exports/
 *.egg-info/
 dbt_project/.user.yml
 logs/
+eval_ci/

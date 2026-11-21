@@ -1,0 +1,84 @@
+name: CI
+
+# Além de cada push, roda toda segunda: se a API do Banco Central mudar de formato ou os dados
+# quebrarem algum teste de qualidade, o CI avisa mesmo sem mudança no código.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 11 * * 1"
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg17
+        env:
+          POSTGRES_USER: bcb
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: bcb
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bcb" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://bcb:ci-only@localhost:5432/bcb
+      TEST_DATABASE_URL: postgresql://bcb:ci-only@localhost:5432/bcb_test
+      # conexão do dbt (profiles.yml lê estas variáveis)
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: bcb
+      PGPASSWORD: ci-only
+      PGDATABASE: bcb
+      DAGSTER_HOME: ${{ github.workspace }}/.dagster_home
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          mkdir -p "$DAGSTER_HOME"
+      - name: Ruff
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Banco de teste
+        run: psql "$DATABASE_URL" -c "CREATE DATABASE bcb_test"
+      - name: Pytest
+        run: pytest -q
+      - name: Ingestão real (APIs públicas do Banco Central)
+        run: python -m bcb_pipeline ingest
+      - name: dbt build (modelos + testes de qualidade e reconciliação)
+        run: dbt build --project-dir dbt_project --profiles-dir dbt_project
+      - name: Definições do Dagster
+        run: dagster definitions validate -m bcb_pipeline.orchestration
+
+      # --- RAG: indexa os documentos com o assistente e avalia a busca -------------------------
+      - name: Assistente (repositório público)
+        uses: actions/checkout@v4
+        with:
+          repository: giuliagarbelini26296/personal-ai-assistant-rag-mcp
+          path: assistant
+      - name: Instala o assistente
+        run: |
+          python -m venv assistant/.venv
+          assistant/.venv/bin/pip install -q -e "assistant[pgvector]"
+      - name: Documentos e índice (embedder local, sem chave)
+        env:
+          ASSISTANT_DIR: ${{ github.workspace }}/assistant
+        run: dagster asset materialize -m bcb_pipeline.orchestration --select "rag/arquivos_markdown,rag/indice_pgvector"
+      - name: Avaliação da busca (portão de qualidade)
+        # Linha de base (21/11/2026): hit@4 0,90 e MRR 0,85 com o embedder local.
+        working-directory: assistant
+        env:
+          VECTOR_STORE: pgvector
+          EMBEDDING_PROVIDER: hash
+        run: >
+          .venv/bin/python -m assistant.evals retrieval --skip-ingest
+          --golden ../eval/golden_bcb.jsonl --out ../eval_ci
+          --min-hit-rate 0.85 --min-mrr 0.75
